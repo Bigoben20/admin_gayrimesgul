@@ -37,6 +37,8 @@
         </div>
 
         @livewireScripts
+        <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <x-livewire-alert::scripts />
         <script src="./TW-ELEMENTS-PATH/dist/js/index.min.js"></script>
     </body>
 </html>
