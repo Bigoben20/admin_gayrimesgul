@@ -3,6 +3,7 @@
 namespace App\Http\Livewire;
 
 use App\Models\Audio;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
@@ -12,6 +13,9 @@ class Audios extends Component
     use LivewireAlert;
 
     use WithFileUploads;
+
+    public $allAudios;
+    public $selectedAudio;
 
     public $genres = [
         'gerilim',
@@ -47,7 +51,7 @@ class Audios extends Component
         session()->flash('error', 'error');
 
         // Save file to storage
-        $file_path = $this->mp3['file_path']->store('mp3s', 'public');
+        $file_path = $this->mp3['file_path']->storePubliclyAs('audios', Auth::id().' '.$this->mp3['title'].'.mp3');
 
         // Create new Mp3 model in database
         $audio = new Audio();
@@ -68,10 +72,20 @@ class Audios extends Component
         ];
     }
 
-
+    public function select($id)
+    {
+        $this->selectedAudio = Audio::find($id);
+    }
+    
+    public function delete()
+    {
+        $this->selectedAudio->delete();
+        $this->alert('success', 'MP3 dosyası başarıyla silindi');
+    }
 
     public function render()
     {
+        $this->allAudios = Audio::all();
         return view('livewire.audios');
     }
 }
