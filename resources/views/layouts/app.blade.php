@@ -40,5 +40,20 @@
         <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <x-livewire-alert::scripts />
         <script src="./TW-ELEMENTS-PATH/dist/js/index.min.js"></script>
+        <script>
+            Livewire.on('setPlaying', (id) => {
+                document.getElementById('player-' + id).play();
+            });
+    
+            Livewire.on('setPaused', (id) => {
+                document.getElementById('player-' + id).pause();
+            });
+    
+            Livewire.on('setStopped', (id) => {
+                let player = document.getElementById('player-' + id);
+                player.pause();
+                player.currentTime = 0;
+            });
+        </script>
     </body>
 </html>

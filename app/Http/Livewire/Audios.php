@@ -3,7 +3,9 @@
 namespace App\Http\Livewire;
 
 use App\Models\Audio;
+use Illuminate\Http\File;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
@@ -17,6 +19,8 @@ class Audios extends Component
     public $allAudios;
     public $selectedAudio;
 
+    public $playing;
+
     public $genres = [
         'gerilim',
         'aksiyon',
@@ -28,30 +32,34 @@ class Audios extends Component
 
     public $mp3 = [
         'title' => '',
-        'file_path' => '',
+        'file' => '',
         'genres' => []
     ];
-    
+
     protected $rules = [
         'mp3.title' => 'required',
-        'mp3.file_path' => 'required|mimes:mp3|max:2048'
+        'mp3.file' => 'required|mimes:mp3|max:3072'
     ];
- 
+
     protected $messages = [
         'mp3.title.required' => 'Ad boş bırakılamaz.',
-        'mp3.file_path.required' => 'Lütfen dosya seçiniz',
-        'mp3.file_path.max.2048' => 'Dosya max 2MB olabilir',
-        'mp3.file_path.max.mimes' => 'Sadece mp3 formatında olabilir',
+        'mp3.file.required' => 'Lütfen dosya seçiniz',
+        'mp3.file.max.2048' => 'Dosya max 2MB olabilir',
+        'mp3.file.max.mimes' => 'Sadece mp3 formatında olabilir',
     ];
 
     public function store()
     {
         // Validate form input
         $this->validate();
-        session()->flash('error', 'error');
+
+        $originalName = $this->mp3['file']->getClientOriginalName();
+        $extension = $this->mp3['file']->getClientOriginalExtension();
+        $fileName = $this->mp3['title'] . '.' . $extension;
 
         // Save file to storage
-        $file_path = $this->mp3['file_path']->storePubliclyAs('audios', Auth::id().' '.$this->mp3['title'].'.mp3');
+        $file_path = $this->mp3['file']->storePubliclyAs('audios', $fileName, 'public');
+        //dd($file_path);
 
         // Create new Mp3 model in database
         $audio = new Audio();
@@ -60,23 +68,35 @@ class Audios extends Component
         $audio->genres = $this->mp3['genres'];
         $audio->save();
 
-        
+
         // Flash success message to session
         $this->alert('success', 'MP3 dosyası başarıyla kaydedildi');
-        
+
         // Reset form input
-        $this->mp3 = [
-            'title' => '',
-            'file_path' => '',
-            'genres' => []
-        ];
+        $this->reset($this->mp3);
+    }
+
+    protected $listeners = ['play'];
+
+    public function play($id)
+    {
+        //dd($id);
+        if ($this->playing == $id) {
+            $this->emit('setStopped', $id);
+            $this->emit('setPlaying', $id);
+
+        } else {
+            $this->emit('setStopped', $this->playing);
+            $this->playing = $id;
+            $this->emit('setPlaying', $this->playing);
+        }
     }
 
     public function select($id)
     {
         $this->selectedAudio = Audio::find($id);
     }
-    
+
     public function delete()
     {
         $this->selectedAudio->delete();
