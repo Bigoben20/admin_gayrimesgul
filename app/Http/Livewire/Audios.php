@@ -73,7 +73,11 @@ class Audios extends Component
         $this->alert('success', 'MP3 dosyası başarıyla kaydedildi');
 
         // Reset form input
-        $this->reset($this->mp3);
+        $this->mp3 = [
+            'title' => '',
+            'file' => '',
+            'genres' => []
+        ];
     }
 
     protected $listeners = ['play'];
