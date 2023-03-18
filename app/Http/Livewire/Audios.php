@@ -77,7 +77,7 @@ class Audios extends Component
         $this->mp3['file'] = '';
         $this->mp3['genres'] = [];
         
-        return redirect()->route('auidos.show');
+        return redirect()->back();
     }
 
     protected $listeners = ['play'];
