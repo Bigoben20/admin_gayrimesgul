@@ -73,7 +73,11 @@ class Audios extends Component
         $this->alert('success', 'MP3 dosyası başarıyla kaydedildi');
 
         // Reset form input
-        $this->reset($this->mp3);
+        $this->mp3['title'] = '';
+        $this->mp3['file'] = '';
+        $this->mp3['genres'] = [];
+        
+        return redirect()->route('auidos.show');
     }
 
     protected $listeners = ['play'];
@@ -81,15 +85,18 @@ class Audios extends Component
     public function play($id)
     {
         //dd($id);
-        if ($this->playing == $id) {
+        if($this->playing == null){
+            $this->emit('setPlaying', $id);
+        }
+        else if ($this->playing == $id) {
             $this->emit('setStopped', $id);
             $this->emit('setPlaying', $id);
 
         } else {
             $this->emit('setStopped', $this->playing);
-            $this->playing = $id;
-            $this->emit('setPlaying', $this->playing);
+            $this->emit('setPlaying', $id);
         }
+        $this->playing = $id;
     }
 
     public function select($id)
