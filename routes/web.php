@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/sesler', [DataController::class, 'audios'])->name('audios.show');
+    Route::post('/sesler', [DataController::class, 'storeAudio'])->name('audios.store');
 });
 
 require __DIR__.'/auth.php';

@@ -43,6 +43,7 @@
         <script>
             Livewire.on('setPlaying', (id) => {
                 document.getElementById('player-' + id).play();
+                console.log(id+" çalıyor")
             });
     
             Livewire.on('setPaused', (id) => {
@@ -51,8 +52,10 @@
     
             Livewire.on('setStopped', (id) => {
                 let player = document.getElementById('player-' + id);
+                console.log(player);
                 player.pause();
                 player.currentTime = 0;
+                console.log(id+" duruyor")
             });
         </script>
     </body>

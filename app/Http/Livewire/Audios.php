@@ -3,7 +3,9 @@
 namespace App\Http\Livewire;
 
 use App\Models\Audio;
+use Illuminate\Contracts\Cache\Store;
 use Illuminate\Http\File;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
@@ -20,6 +22,7 @@ class Audios extends Component
     public $selectedAudio;
 
     public $playing;
+    public $filePath;
 
     public $genres = [
         'gerilim',
@@ -30,22 +33,20 @@ class Audios extends Component
         'komik',
     ];
 
-    public $mp3 = [
-        'title' => '',
-        'file' => '',
-        'genres' => []
-    ];
+    public $mp3Title;
+    public $mp3Genres = [];
+    public $mp3File;
 
     protected $rules = [
-        'mp3.title' => 'required',
-        'mp3.file' => 'required|mimes:mp3|max:3072'
+        'mp3Title' => 'required',
+        'mp3File' => 'required|mimes:mp3|max:3072'
     ];
 
     protected $messages = [
-        'mp3.title.required' => 'Ad boş bırakılamaz.',
-        'mp3.file.required' => 'Lütfen dosya seçiniz',
-        'mp3.file.max.2048' => 'Dosya max 2MB olabilir',
-        'mp3.file.max.mimes' => 'Sadece mp3 formatında olabilir',
+        'mp3Title.required' => 'Ad boş bırakılamaz.',
+        'mp3File.required' => 'Lütfen dosya seçiniz',
+        'mp3File.max.2048' => 'Dosya max 2MB olabilir',
+        'mp3File.max.mimes' => 'Sadece mp3 formatında olabilir',
     ];
 
     public function store()
@@ -53,19 +54,19 @@ class Audios extends Component
         // Validate form input
         $this->validate();
 
-        $originalName = $this->mp3['file']->getClientOriginalName();
-        $extension = $this->mp3['file']->getClientOriginalExtension();
-        $fileName = $this->mp3['title'] . '.' . $extension;
+        $originalName = $this->mp3File->getClientOriginalName();
+        $extension = $this->mp3File->getClientOriginalExtension();
+        $fileName = $this->mp3Title.".mp3";
 
         // Save file to storage
-        $file_path = $this->mp3['file']->storePubliclyAs('audios', $fileName, 'public');
+        $file_path = Storage::disk('local')->put($fileName,$this->mp3File);
         //dd($file_path);
 
         // Create new Mp3 model in database
         $audio = new Audio();
-        $audio->name = $this->mp3['title'];
+        $audio->name = $this->mp3Title;
         $audio->filepath = $file_path;
-        $audio->genres = $this->mp3['genres'];
+        $audio->genres = $this->mp3Genres;
         $audio->save();
 
 
@@ -73,36 +74,40 @@ class Audios extends Component
         $this->alert('success', 'MP3 dosyası başarıyla kaydedildi');
 
         // Reset form input
-        $this->mp3 = [
-            'title' => '',
-            'file' => '',
-            'genres' => []
-        ];
+        $this->mp3Title = "";
+        $this->mp3Genres = [];
+        $this->mp3File = "";
+
+        return redirect()->route('dashboard');
     }
 
     protected $listeners = ['play'];
 
     public function play($id)
-    {
-        //dd($id);
-        if ($this->playing == $id) {
+    {   
+        if ($this->playing == null) {
+            $this->emit('setPlaying', $id);
+        }
+        else if($this->playing == $id){
             $this->emit('setStopped', $id);
             $this->emit('setPlaying', $id);
-
-        } else {
+        } 
+        else {
             $this->emit('setStopped', $this->playing);
-            $this->playing = $id;
-            $this->emit('setPlaying', $this->playing);
+            $this->emit('setPlaying', $id);
         }
+        $this->playing = $id;
     }
 
     public function select($id)
     {
         $this->selectedAudio = Audio::find($id);
+        Storage::files('audios');
     }
 
     public function delete()
     {
+        Storage::delete($this->selectedAudio->name);
         $this->selectedAudio->delete();
         $this->alert('success', 'MP3 dosyası başarıyla silindi');
     }
